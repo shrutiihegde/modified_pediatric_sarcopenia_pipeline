@@ -1,3 +1,12 @@
+"""
+Cmd arguments used while running tests:
+python L3_finder.py -h 
+--dicom_dir /workspace/Shruti_sarcopenia_segmentation/data/test/ST-test_MRI001
+--model_path /Shruti_sarcopenia_segmentation/pediatric_sarcopenia_pipeline/models/models/l3/child_9_slice_w_transfer_fold_3.h5 
+--output_directory /workspace/Shruti_sarcopenia_segmentation/data/test/L3finder_output
+--save_plots
+"""
+
 from matplotlib import pyplot as plt
 
 from argparse import ArgumentParser
@@ -9,25 +18,22 @@ import attr
 import pdb
 import toolz
 
-
 from l3finder.ingest import find_subjects, separate_series, \
     construct_series_for_subjects_without_sagittals
 from l3finder.exclude import filter_axial_series, filter_sagittal_series, \
         load_series_to_skip_pickle_file, remove_series_to_skip
 from l3finder.output import output_l3_images_to_h5, output_images
-from l3finder.predict import make_predictions_for_sagittal_mips
+#from l3finder.predict import make_predictions_for_sagittal_mips
 from l3finder.preprocess import create_sagittal_mip, preprocess_images, \
     group_mips_by_dimension, create_sagittal_mips_from_series
 from util.reify import reify
 from util.investigate import load_subject_ids_to_investigate
-
 
 def pcs_debugger(type, value, tb):
     traceback.print_exception(type, value, tb)
     pdb.pm()
 
 sys.excepthook = pcs_debugger
-
 
 @attr.s
 class SagittalMIP:
@@ -50,7 +56,6 @@ class SagittalMIP:
     # @property
     # def subject_id(self):
         # return self.series.subject.id_
-
 
 def parse_args():
     parser = ArgumentParser()
@@ -121,7 +126,6 @@ def parse_args():
 
     return parser.parse_args()
 
-
 def main():
     args = parse_args()
 
@@ -138,7 +142,6 @@ def main():
         )
     )
     return l3_images
-
 
 def find_l3_images(config):
     print("Finding subjects")
@@ -228,11 +231,9 @@ def find_l3_images(config):
     l3_images = build_l3_images(axial_series, prediction_results)
     return l3_images, exclusions
 
-
 def flatten(sequence):
     """Converts array of arrays into just an array of items"""
     return itertools.chain(*sequence)
-
 
 def build_l3_images(axial_series, prediction_results):
     """
@@ -242,18 +243,25 @@ def build_l3_images(axial_series, prediction_results):
     axials_with_prediction_results = toolz.join(
         leftkey=lambda ax: ax.subject.id_,
         leftseq=axial_series,
-        rightkey=lambda pred_res: pred_res.input_mip.subject_id,
+        rightkey=lambda pred_res: pred_res[0].input_mip.subject_id,
         rightseq=prediction_results
     )
+    #print(prediction_results[0][0].input_mip)
+    """
+    file1 = open('/workspace/Shruti_sarcopenia_segmentation/pediatric_sarcopenia_pipeline/outputs/out.txt', 'w')
+    file1.writelines(str(prediction_results[0]))
+    file1.close()
+    """
+    
     l3_images = [
         L3Image(
-            sagittal_series=result.input_mip.series,
+            sagittal_series=result[0].input_mip.series,
             axial_series=ax,
-            prediction_result=result)
+            prediction_result=result
+            )
         for ax, result in axials_with_prediction_results
     ]
     return l3_images
-
 
 @attr.s
 class L3Image:
@@ -314,6 +322,6 @@ class L3Image:
         self.axial_series.free_pixel_data()
         self.sagittal_series.free_pixel_data()
 
-
 if __name__ == "__main__":
     l3_images = main()
+
