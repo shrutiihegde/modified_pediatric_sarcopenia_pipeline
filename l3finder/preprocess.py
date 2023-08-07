@@ -18,18 +18,15 @@ from ct_slice_detection.io.preprocessing import preprocess_to_8bit
 from ct_slice_detection.utils.testing_utils import preprocess_test_image
 from util.pipelines import CachablePipelineStep, build_callable_that_loads_from_cache_or_runs_step
 
-
 def create_mip_from_path(path):
     image_data = load_nifti_data(path)
     sliced_image = slice_middle_images(image_data)
     flipped_image = np.flip(sliced_image)
     return create_mip(flipped_image)
 
-
 def load_nifti_data(path):
     sitk_img = sitk.ReadImage(str(path))
     return sitk.GetArrayFromImage(sitk_img)
-
 
 def slice_middle_images(sagittal_series, mip_thickness_mm=36):
     x_dim = sagittal_series.pixel_data.shape[0]
@@ -39,22 +36,18 @@ def slice_middle_images(sagittal_series, mip_thickness_mm=36):
     offset = round(num_slices / 2)
     return sagittal_series.pixel_data[mid_index - offset:mid_index + offset]
 
-
 def create_mip(np_img):
     return np.amax(np_img, axis=0)
-
 
 def threshold(image_data, low, high):
     r = np.copy(image_data)
     r[(r < low) | (r > high)] = np.iinfo(np.int16).min
     return r
 
-
 def normalize_to_8bit(image_data):
     r = np.full_like(image_data, 1, dtype=np.int8)
     info = np.iinfo(np.int8)
     return cv2.normalize(image_data, None, info.min, info.max, cv2.NORM_MINMAX)
-
 
 def resize_for_nn(image_data):
     # scale_factor = 384 / image_data.shape[0]
@@ -64,14 +57,12 @@ def resize_for_nn(image_data):
     trim_amount = (384 - 256) // 2
     return scaled[:, trim_amount:-trim_amount]
 
-
 def process_image(path):
     mip = create_mip_from_path(str(path))
     mip = threshold(mip, low=100, high=1500)
     norm = normalize_to_8bit(mip)
     print(path, norm.shape)
     return resize_for_nn(norm)
-
 
 def normalise_spacing_and_preprocess(dataset, new_spacing=1):
     """Zooms all images to make pixel spacings equal. The other group's paper
@@ -86,11 +77,9 @@ def normalise_spacing_and_preprocess(dataset, new_spacing=1):
     new_image_heights = (image.shape[0] for image in consistently_spaced_images)
     return consistently_spaced_images, new_image_heights
 
-
 def normalize_spacing(image, spacing, desired_spacing=1):
     zoom_factor = [spacing[2] / desired_spacing, spacing[0] / desired_spacing]
     return zoom(image, zoom_factor)
-
 
 def handle_ydata(ydata):
     """ct-slice-detection application expects ydata to be in this weird
@@ -103,7 +92,6 @@ def handle_ydata(ydata):
     except AttributeError:
         return ydata['A']
 
-
 def create_sagittal_mips_from_series(many_series, cache_dir="", cache=True):
     sagittal_mip_creator = build_callable_that_loads_from_cache_or_runs_step(
         pipeline_step=CreateSagittalMIPsStep(
@@ -114,7 +102,6 @@ def create_sagittal_mips_from_series(many_series, cache_dir="", cache=True):
     )
 
     return sagittal_mip_creator(many_series)
-
 
 class CreateSagittalMIPsStep(CachablePipelineStep):
     def __init__(self, cache_dir, expected_count):
@@ -150,7 +137,6 @@ class CreateSagittalMIPsStep(CachablePipelineStep):
         with open(self._cache_pickle_path, "wb") as f:
             return pickle.dump(sagittal_mips, f)
 
-
 def _create_sagittal_mips_from_series(many_series):
     with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
         # Could use map, but imap lets me get a progress bar
@@ -164,7 +150,6 @@ def _create_sagittal_mips_from_series(many_series):
         pool.join()
 
     return [mip for mip in mips if mip is not None]
-
 
 def _load_image_and_create_mip(one_series):
     return create_sagittal_mip(one_series)
@@ -184,7 +169,6 @@ def create_sagittal_mip(one_sagittal_series):
         print(traceback.format_exc())
         return None
 
-
 @attr.s
 class PreprocessedImage:
     pixel_data = attr.ib()
@@ -194,7 +178,6 @@ class PreprocessedImage:
     @property
     def source_series(self):
         return self.source_mip.source_series
-
 
 
 
@@ -223,15 +206,11 @@ def _preprocess_mip(mip):
         source_mip=mip
     )
 
-
 def expand_axes(image):
     result = preprocess_test_image(image)
     return result[:, :, np.newaxis]
-
 
 def group_mips_by_dimension(mips):
     def dimension_from_sagittal_mip(sag_mip):
         return sag_mip.preprocessed_image.pixel_data.shape
     return toolz.groupby(dimension_from_sagittal_mip, mips)
-
-
