@@ -325,8 +325,12 @@ class Subject:
         return self.path.name.split('-')[-1]
 
     def find_series(self):
+        #print(self.path.name.split('-')[-1])
+        #print(self.path.name.split('-')[0])
+        print("\n In find_series (class Subject)...")
         for accession_path in self.path.iterdir():
             for series_path in accession_path.iterdir():
+                print("Series_path:",series_path)
                 yield ImageSeries(
                     subject=self,
                     series_path=series_path,
@@ -342,8 +346,9 @@ class NoSubjectDirSubject:
         return self.path.name.split('-')[0]
 
     def find_series(self):
-          for series_path in self.path.iterdir():
-              yield ImageSeries(
+        print("\n In find_series (class NoSubjectDirSubject)...")
+        for series_path in self.path.iterdir():
+            yield ImageSeries(
                   subject=self,
                   series_path=series_path,
                   accession_path=None
@@ -357,6 +362,7 @@ def find_subjects(dataset_dir, new_tim_dir_structure=False):
             yield subject_class(path=subject_path)
 
 def find_series(subject):
+    print("In find_series!")
     warnings.warn("deprecated, use subject.find_series() instead", DeprecatedWarning)
     subject.find_series()
 
