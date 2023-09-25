@@ -37,8 +37,10 @@ def output_images(l3_images, args):
                 total=len(l3_images),
             )
         )
+        
         pool.close()
         pool.join()
+    
     return l3_images
 
     # return [image_outputter(l3_image) for l3_image in tqdm(l3_images)]
@@ -48,6 +50,7 @@ def _output_image(output_pipeline, l3_image):
     try:
         toolz.pipe(l3_image, *output_pipeline)
     finally:
+        print("l3 image:",l3_image)
         l3_image.free_pixel_data()
     return l3_image
 
@@ -114,6 +117,7 @@ def save_l3_image_to_png(l3_image, base_dir, should_overwrite):
 
 
 def _create_directory_for_l3_image(base_dir, l3_image, should_overwrite):
+    #print("L3 IMAGEEEE",l3_image)
     image_dir = Path(base_dir, str(l3_image.subject_id))
     image_dir.mkdir(exist_ok=should_overwrite)  # don't overwrite for now
     return image_dir
@@ -257,5 +261,3 @@ def output_l3_images_to_h5(l3_images, h5_file_path):
         h5_file.create_array(
             where=h5_file.root, name='subject_ids', obj=subject_ids
         )
-
-
