@@ -19,9 +19,11 @@ KNOWN_ORIENTATIONS = {
     (1, 0, 0, 0, 0, -1): 'coronal',
 }
 
+
 def get_orientation(orientation_array):
     rounded_orientation = [round(float(x)) for x in orientation_array]
     return KNOWN_ORIENTATIONS[tuple(rounded_orientation)]
+
 
 class UnknownOrientation(Exception):
     """
@@ -31,6 +33,7 @@ class UnknownOrientation(Exception):
     def __init__(self, series, msg=None):
         super(UnknownOrientation, self).__init__(msg)
         self.series = series
+
 
 @attr.s
 class ImageSeries:
@@ -226,6 +229,7 @@ class ImageSeries:
 
         return _dataset_path_pairs_without_scout(pairs)
 
+
 def _dataset_path_pairs_without_scout(sorted_dataset_path_pairs):
     first_dataset = sorted_dataset_path_pairs[0][0]
     second_dataset = sorted_dataset_path_pairs[1][0]
@@ -236,6 +240,7 @@ def _dataset_path_pairs_without_scout(sorted_dataset_path_pairs):
         return sorted_dataset_path_pairs[1:]
     else:
         return sorted_dataset_path_pairs
+
 
 @attr.s
 class ConstructedImageSeries:
@@ -295,6 +300,7 @@ class ConstructedImageSeries:
     def resolution(self):
         return self.pixel_data.shape[1], self.pixel_data.shape[2]
 
+
 @attr.s(frozen=True)
 class L3AxialSliceMetadata:
     sagittal_start_z_pos = attr.ib()
@@ -316,6 +322,7 @@ class L3AxialSliceMetadata:
             self.l3_axial_image_dcm_path,
         ]
 
+
 @attr.s(frozen=True)
 class Subject:
     path = attr.ib()
@@ -325,13 +332,18 @@ class Subject:
         return self.path.name.split('-')[-1]
 
     def find_series(self):
+        #print(self.path.name.split('-')[-1])
+        #print(self.path.name.split('-')[0])
+        print("\n In find_series (class Subject)...")
         for accession_path in self.path.iterdir():
             for series_path in accession_path.iterdir():
+                print("Series_path:",series_path)
                 yield ImageSeries(
                     subject=self,
                     series_path=series_path,
                     accession_path=series_path,
                 )
+
 
 @attr.s(frozen=True)
 class NoSubjectDirSubject:
@@ -342,12 +354,14 @@ class NoSubjectDirSubject:
         return self.path.name.split('-')[0]
 
     def find_series(self):
-          for series_path in self.path.iterdir():
-              yield ImageSeries(
+        print("\n In find_series (class NoSubjectDirSubject)...")
+        for series_path in self.path.iterdir():
+            yield ImageSeries(
                   subject=self,
                   series_path=series_path,
                   accession_path=None
               )
+
 
 def find_subjects(dataset_dir, new_tim_dir_structure=False):
     subject_class = NoSubjectDirSubject if new_tim_dir_structure else Subject
@@ -356,9 +370,12 @@ def find_subjects(dataset_dir, new_tim_dir_structure=False):
         if subject_path.name.lower() != '.ds_store':
             yield subject_class(path=subject_path)
 
+
 def find_series(subject):
+    print("In find_series!")
     warnings.warn("deprecated, use subject.find_series() instead", DeprecatedWarning)
     subject.find_series()
+
 
 def separate_series(series):
     excluded_series = []
@@ -390,6 +407,7 @@ def separate_series(series):
 
     return sagittal_series, axial_series, excluded_series
 
+
 def same_orientation(series, orientation, excluded_series):
     try:
         return series.orientation == orientation
@@ -398,6 +416,7 @@ def same_orientation(series, orientation, excluded_series):
         return False
     except NotADirectoryError:
         return False
+
 
 def construct_series_for_subjects_without_sagittals(
     subjects,
@@ -435,8 +454,10 @@ def construct_series_for_subjects_without_sagittals(
         in axials_to_construct_with
     ]
 
+
 def _construct_sagittal_from_axial_image(axial_image):
     return np.flip(np.rot90(np.rot90(axial_image, axes=(0,2)), axes=(1,2), k=3), axis=2)
+
 
 def filter_axial_series(axial_series):
     def meets_criteria(ax):
@@ -449,6 +470,7 @@ def filter_axial_series(axial_series):
             return False
     # Must be 5.0 or 3.0 slice thickness for now
     return [ax for ax in axial_series if meets_criteria(ax)]
+
 
 def load_pixel_data_from_paths(dicom_paths):
     """
@@ -519,6 +541,7 @@ def load_slice_loc_from_paths(dicom_paths):
         pass
 
     return out_array
+
 
 def get_spacing(dcm_dataset):
     spacings = [float(spacing) for spacing in dcm_dataset.PixelSpacing]
