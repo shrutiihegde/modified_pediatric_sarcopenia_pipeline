@@ -1,11 +1,4 @@
-"""
-Cmd arguments used while running tests:
-python L3_finder.py -h 
---dicom_dir /workspace/Shruti_sarcopenia_segmentation/data/test/ST-test_MRI001
---model_path /Shruti_sarcopenia_segmentation/pediatric_sarcopenia_pipeline/models/models/l3/child_9_slice_w_transfer_fold_3.h5 
---output_directory /workspace/Shruti_sarcopenia_segmentation/data/test/L3finder_output
---save_plots
-"""
+# Usage: python3 L3_finder.py --dicom_dir /workspace/Shruti_sarcopenia_segmentation/data/test/ST-test_MRI001 --model_path /Shruti_sarcopenia_segmentation/pediatric_sarcopenia_pipeline/models/models/l3/child_9_slice_w_transfer_fold_3.h5 --output_directory /workspace/Shruti_sarcopenia_segmentation/data/test/L3finder_output --save_plots
 
 from matplotlib import pyplot as plt
 
@@ -23,7 +16,7 @@ from l3finder.ingest import find_subjects, separate_series, \
 from l3finder.exclude import filter_axial_series, filter_sagittal_series, \
         load_series_to_skip_pickle_file, remove_series_to_skip
 from l3finder.output import output_l3_images_to_h5, output_images
-#from l3finder.predict import make_predictions_for_sagittal_mips
+# from l3finder.predict import make_predictions_for_sagittal_mips
 from l3finder.preprocess import create_sagittal_mip, preprocess_images, \
     group_mips_by_dimension, create_sagittal_mips_from_series
 from util.reify import reify
@@ -155,10 +148,17 @@ def find_l3_images(config):
     
     print('Subjects found: ', len(subjects))
     
-
+    print("Subjects:",subjects)
+    
     print("Finding series")
+    
+#     for s in subjects:
+#         print(s.find_series())
+    
+#     series = list((s.find_series() for s in subjects)) 
     series = list(flatten(s.find_series() for s in subjects))
-
+    
+    print("Series:",series)
     exclusions = []
 
     print("Separating series")
@@ -233,6 +233,7 @@ def find_l3_images(config):
 
 def flatten(sequence):
     """Converts array of arrays into just an array of items"""
+    print("Sequence",*sequence)
     return itertools.chain(*sequence)
 
 def build_l3_images(axial_series, prediction_results):
@@ -324,4 +325,9 @@ class L3Image:
 
 if __name__ == "__main__":
     l3_images = main()
+
+
+
+
+
 
